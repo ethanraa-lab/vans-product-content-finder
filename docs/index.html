@@ -107,6 +107,21 @@
     @media (max-width: 410px) {
       .product { grid-template-columns: 90px minmax(0, 1fr); gap: .75rem; }
     }
+    .workspace-bar { background: #151922; }
+    .intro { padding: clamp(1.25rem, 4vw, 2.75rem); border-radius: 16px; background: linear-gradient(118deg, #1c2330, #303946); color: #fff; }
+    .intro .muted { color: #d9dfe8; }
+    .guide { display: flex; flex-wrap: wrap; gap: .5rem 1.6rem; padding-left: 1.3rem; margin: 1rem 0 0; color: #e8edf4; font-size: .86rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+    button { min-height: 44px; padding: .55rem .9rem; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font: inherit; font-weight: 650; cursor: pointer; }
+    button:hover { background: #f1f2f5; }
+    .primary { flex: 1; background: var(--accent); color: #fff; border-color: var(--accent); }
+    .primary:hover { background: #811627; }
+    .status { margin-top: .8rem; color: var(--muted); font-size: .86rem; }
+    .result-list article { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+    .result-list article:first-child { border-top: 0; padding-top: 0; }
+    .result-list .product { margin-top: 0; }
+    .code { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+    @media (max-width: 410px) { .primary { flex-basis: 100%; } }
   </style>
 </head>
 <body>
@@ -114,41 +129,142 @@
   <main class="panel">
     <header class="intro">
       <h1>Product Content Finder</h1>
-      <p class="muted">Find product descriptions, features, and materials by Vans style code.</p>
+      <p class="muted">Look up a Vans style code and open its official product page.</p>
+      <ol class="guide">
+        <li>Enter or paste VN codes</li>
+        <li>Select Search products</li>
+        <li>Review each result and open its source</li>
+      </ol>
     </header>
 
-    <section class="card lookup" aria-labelledby="lookup-title">
-      <label id="lookup-title" for="vn-codes">Enter VN codes</label>
-      <p id="code-help" class="muted">One style code per line.</p>
-      <textarea id="vn-codes" aria-describedby="code-help" rows="3" spellcheck="false" placeholder="VN000D26Y28&#10;VN000D04YGD&#10;VN000D1HBZW"></textarea>
-      <ul class="chips storefronts" aria-label="Planned storefronts">
-        <li class="chip">US</li><li class="chip">UK</li><li class="chip">Europe</li><li class="chip">Australia</li>
-      </ul>
-    </section>
+    <form id="lookup" class="card lookup" aria-labelledby="lookup-title">
+      <label id="lookup-title" for="vn-codes">VN style codes</label>
+      <p id="code-help" class="muted">Paste one code per line, or separate codes with commas.</p>
+      <textarea id="vn-codes" aria-describedby="code-help" rows="3" spellcheck="false" autocapitalize="characters" placeholder="VN0A5DXU1CI" maxlength="3000"></textarea>
+      <div class="actions">
+        <button class="primary" type="submit">Search products</button>
+        <button id="example" type="button">Try example</button>
+        <button id="clear" type="button">Clear</button>
+      </div>
+      <p class="status">The preview includes two verified Vans US products. Other codes get an external search link.</p>
+    </form>
 
     <section class="card result" aria-labelledby="result-title">
       <div class="heading">
-        <h2 id="result-title">Product result</h2>
-        <span class="chip match">Example match</span>
+        <h2 id="result-title">Search results</h2>
+        <span class="chip">Vans US preview</span>
       </div>
-      <div class="product">
-        <img width="132" height="132" alt="Hylane Shoe in black and white" src="https://assets.vans.com/images/t_img/c_fill%2Cg_center%2Cf_auto%2Ch_573%2Ce_unsharp_mask%3A100%2Cw_458/dpr_2.0/v1734688821/VN000D26Y28-HERO/Hylane-Shoe-VANS-BlackWhite-HERO.png">
-        <div>
-          <h3>Hylane Shoe</h3>
-          <p class="muted">VN000D26Y28 · Vans US</p>
-          <p>Description and product details available on Vans US.</p>
-          <p><a href="https://www.vans.com/en-us/p/shoes/hylane-1001/hylane-shoe-VN000D26Y28" target="_blank" rel="noopener">View original product ↗</a></p>
-        </div>
-      </div>
+      <p id="search-status" class="muted" role="status">Enter a code to see its result here.</p>
+      <div id="result-list" class="result-list"></div>
     </section>
 
     <section class="card output" aria-labelledby="output-title">
-      <h2 id="output-title">Output fields</h2>
+      <h2 id="output-title">Planned output fields</h2>
       <ul class="chips">
         <li class="chip">Title</li><li class="chip">Short Description</li><li class="chip">Long Description</li><li class="chip">Body HTML</li><li class="chip">PDP Details</li><li class="chip">Materials &amp; Composition</li><li class="chip">Source Website</li><li class="chip">Source URL</li>
       </ul>
     </section>
-    <footer class="muted">The result above is a preview. Live lookup and Excel export are in development.</footer>
+    <footer class="muted">Live storefront lookup, product content extraction, and Excel export are in development.</footer>
   </main>
+  <script>
+    const products = new Map([
+      ["VN0A5DXU1CI", {
+        title: "Skate Loafer Shoe",
+        color: "Dark Forest Green",
+        summary: "Leather upper, PopCush cushioning, and a SickStick rubber outsole.",
+        path: "skate/shoes-5225/skate-loafer-VN0A5DXU1CI",
+        image: "https://assets.vans.com/images/t_Thumbnail/v1756519877/VN0A5DXU1CI-HERO/Skate-Loafer-Shoe-VANS-HERO.png"
+      }],
+      ["VN000D26Y28", {
+        title: "Hylane Shoe",
+        color: "Black / White",
+        summary: "Open the Vans product page to review its description and features.",
+        path: "shoes/hylane-1001/hylane-shoe-VN000D26Y28",
+        image: "https://assets.vans.com/images/t_img/c_fill%2Cg_center%2Cf_auto%2Ch_573%2Ce_unsharp_mask%3A100%2Cw_458/dpr_2.0/v1734688821/VN000D26Y28-HERO/Hylane-Shoe-VANS-BlackWhite-HERO.png"
+      }]
+    ]);
+
+    const form = document.querySelector("#lookup");
+    const input = document.querySelector("#vn-codes");
+    const status = document.querySelector("#search-status");
+    const results = document.querySelector("#result-list");
+
+    function element(tag, value, className = "") {
+      const node = document.createElement(tag);
+      node.textContent = value;
+      node.className = className;
+      return node;
+    }
+
+    function externalLink(label, url) {
+      const link = element("a", label + " ↗");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      return link;
+    }
+
+    function renderResult(code) {
+      const article = element("article", "");
+      const product = products.get(code);
+      if (!product) {
+        article.append(
+          element("h3", code, "code"),
+          element("p", "No match in the preview catalog.", "muted"),
+          externalLink("Search official Vans US pages", "https://www.google.com/search?q=" + encodeURIComponent('site:vans.com/en-us/p "' + code + '"'))
+        );
+        return article;
+      }
+
+      const row = element("div", "", "product");
+      const image = element("img", "");
+      image.src = product.image;
+      image.alt = product.title + " in " + product.color;
+      image.onerror = () => image.removeAttribute("src");
+      const details = element("div", "");
+      details.append(
+        element("h3", product.title),
+        element("p", code + " · Vans US · " + product.color, "muted"),
+        element("p", product.summary),
+        externalLink("View official product page", "https://www.vans.com/en-us/p/" + product.path)
+      );
+      row.append(image, details);
+      article.append(row);
+      return article;
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      results.replaceChildren();
+      const entries = input.value.toUpperCase().split(/[\s,;]+/).filter(Boolean);
+      const codes = [...new Set(entries)];
+      if (!codes.length || codes.some(code => !/^VN[A-Z0-9]{9}$/.test(code))) {
+        status.textContent = "Enter valid 11-character Vans style codes, such as VN0A5DXU1CI.";
+        input.setAttribute("aria-invalid", "true");
+        input.focus();
+        return;
+      }
+      input.removeAttribute("aria-invalid");
+      const matches = codes.filter(code => products.has(code)).length;
+      status.textContent = matches + " of " + codes.length + " matched in the preview catalog.";
+      results.append(...codes.map(renderResult));
+      if (matchMedia("(max-width: 760px)").matches) {
+        status.scrollIntoView({ block: "nearest" });
+      }
+    });
+
+    document.querySelector("#example").addEventListener("click", () => {
+      input.value = "VN0A5DXU1CI";
+      form.requestSubmit();
+    });
+    document.querySelector("#clear").addEventListener("click", () => {
+      form.reset();
+      results.replaceChildren();
+      input.removeAttribute("aria-invalid");
+      status.textContent = "Enter a code to see its result here.";
+      input.focus();
+    });
+    input.addEventListener("input", () => input.removeAttribute("aria-invalid"));
+  </script>
 </body>
 </html>

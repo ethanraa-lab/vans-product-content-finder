@@ -5,44 +5,128 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Vans Product Content Finder</title>
   <style>
+    :root {
+      color-scheme: light;
+      --ink: #191b20;
+      --muted: #565e6b;
+      --line: #e1e4e9;
+      --surface: #fff;
+      --accent: #a11d32;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 15px; color: #171717; background: #fcfcfc; font: 1rem/1.5 system-ui, sans-serif; }
-    .panel { max-width: 960px; margin: auto; padding: 15px; background: #f8f8f8; border: 1px solid #dfdfdf; border-radius: 22px; }
-    h1, h2, h3 { margin: 0; font-size: 1.2rem; line-height: 1.35; }
-    p { margin: .35rem 0 0; }
-    .muted { color: #626262; }
-    .heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1rem; }
-    .chip { display: inline-block; border-radius: 999px; background: #ebebeb; padding: .15rem .55rem; font-size: .875rem; font-weight: 600; }
-    .match { background: #d2efdf; color: #086734; }
-    .chips { display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; margin: .5rem 0 0; list-style: none; }
-    label { display: block; margin-top: 1rem; font-weight: 600; }
-    textarea { display: block; width: 100%; min-height: 6.5rem; margin-top: .4rem; padding: .65rem .85rem; font: inherit; color: inherit; background: #fff; border: 1px solid #ddd; border-radius: .75rem; resize: vertical; }
-    .storefronts { margin-top: .8rem; }
-    .result { padding: 1rem; margin: 1rem 0; }
-    .product { display: flex; align-items: center; gap: .95rem; margin-top: .65rem; }
-    .product img { width: 132px; height: 132px; flex-shrink: 0; object-fit: cover; border: 1px solid #ddd; border-radius: 20px; background: #e5e4ea; }
-    a { color: inherit; text-underline-offset: .2em; }
-    footer { margin-top: .85rem; }
-    @media (max-width: 450px) { .result { padding: .75rem 0; } .product img { width: 92px; height: 92px; } }
+    body {
+      margin: 0;
+      background: #f2f3f6;
+      color: var(--ink);
+      font: 1rem/1.5 system-ui, sans-serif;
+    }
+    .workspace-bar {
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+      min-height: 66px;
+      padding: .85rem max(1.25rem, calc((100% - 1100px) / 2));
+      background: #191b20;
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 650;
+    }
+    .brand-mark {
+      width: 24px;
+      height: 12px;
+      border-top: 3px solid #f37687;
+      border-bottom: 3px solid #f37687;
+      transform: skewX(-22deg);
+    }
+    .panel {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 1.25rem;
+      max-width: 1140px;
+      margin: clamp(2rem, 5vw, 4rem) auto;
+      padding: 0 1.25rem;
+    }
+    .intro, .output, footer { grid-column: 1 / -1; }
+    .lookup { grid-column: span 2; }
+    .result { grid-column: span 3; }
+    .card {
+      min-width: 0;
+      padding: clamp(1rem, 3vw, 1.65rem);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: 0 4px 12px rgb(25 27 32 / 4%);
+    }
+    .intro { margin-bottom: .6rem; }
+    .heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; }
+    h1, h2, h3 { margin: 0; line-height: 1.18; }
+    h1 { font-size: clamp(2rem, 4.6vw, 3.3rem); letter-spacing: -.055em; }
+    h2 { font-size: 1.16rem; letter-spacing: -.025em; }
+    h3 { font-size: clamp(1.2rem, 2.2vw, 1.6rem); letter-spacing: -.035em; }
+    p { margin: .45rem 0 0; }
+    .muted { color: var(--muted); }
+    .intro p { max-width: 62ch; margin-top: .75rem; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: .25rem .6rem;
+      background: #f6f7f9;
+      color: #383f49;
+      font-size: .8rem;
+      font-weight: 600;
+    }
+    .match { border-color: #c5e2d4; background: #e9f5ee; color: #235940; }
+    .chips { display: flex; flex-wrap: wrap; gap: .45rem; padding: 0; margin: .75rem 0 0; list-style: none; }
+    label { display: block; font-weight: 650; font-size: 1.16rem; }
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 7.3rem;
+      margin-top: .75rem;
+      padding: .75rem .85rem;
+      resize: vertical;
+      border: 1px solid #cdd2da;
+      border-radius: 8px;
+      background: #fbfbfc;
+      color: var(--ink);
+      font: .95rem/1.65 ui-monospace, Consolas, monospace;
+    }
+    textarea::placeholder { color: #626b79; opacity: 1; }
+    .storefronts { margin-top: .9rem; }
+    .product { display: grid; grid-template-columns: minmax(100px, 150px) minmax(0, 1fr); align-items: center; gap: 1.15rem; margin-top: 1.25rem; }
+    .product img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 9px; background: #eeeef2; }
+    .product p { font-size: .9rem; }
+    a { display: inline-block; margin-top: .35rem; color: var(--accent); font-weight: 650; text-underline-offset: .2em; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    footer { padding: 0 .1rem; font-size: .85rem; }
+    @media (max-width: 760px) {
+      .lookup, .result { grid-column: 1 / -1; }
+    }
+    @media (max-width: 410px) {
+      .product { grid-template-columns: 90px minmax(0, 1fr); gap: .75rem; }
+    }
   </style>
 </head>
 <body>
+  <div class="workspace-bar"><span class="brand-mark" aria-hidden="true"></span> Vans Product Content Finder</div>
   <main class="panel">
-    <header class="heading">
-      <div>
-        <h1>Vans Product Content Finder</h1>
-        <p class="muted">Concept preview for the new tool</p>
-      </div>
-      <span class="chip">Prototype</span>
+    <header class="intro">
+      <h1>Product Content Finder</h1>
+      <p class="muted">Find product descriptions, features, and materials by Vans style code.</p>
     </header>
 
-    <label for="vn-codes">Enter VN codes</label>
-    <textarea id="vn-codes" rows="3" spellcheck="false" placeholder="VN000D26Y28&#10;VN000D04YGD&#10;VN000D1HBZW"></textarea>
-    <ul class="chips storefronts" aria-label="Planned storefronts">
-      <li class="chip">US</li><li class="chip">UK</li><li class="chip">Europe</li><li class="chip">Australia</li>
-    </ul>
+    <section class="card lookup" aria-labelledby="lookup-title">
+      <label id="lookup-title" for="vn-codes">Enter VN codes</label>
+      <p id="code-help" class="muted">One style code per line.</p>
+      <textarea id="vn-codes" aria-describedby="code-help" rows="3" spellcheck="false" placeholder="VN000D26Y28&#10;VN000D04YGD&#10;VN000D1HBZW"></textarea>
+      <ul class="chips storefronts" aria-label="Planned storefronts">
+        <li class="chip">US</li><li class="chip">UK</li><li class="chip">Europe</li><li class="chip">Australia</li>
+      </ul>
+    </section>
 
-    <section class="result" aria-labelledby="result-title">
+    <section class="card result" aria-labelledby="result-title">
       <div class="heading">
         <h2 id="result-title">Product result</h2>
         <span class="chip match">Example match</span>
@@ -58,7 +142,7 @@
       </div>
     </section>
 
-    <section aria-labelledby="output-title">
+    <section class="card output" aria-labelledby="output-title">
       <h2 id="output-title">Output fields</h2>
       <ul class="chips">
         <li class="chip">Title</li><li class="chip">Short Description</li><li class="chip">Long Description</li><li class="chip">Body HTML</li><li class="chip">PDP Details</li><li class="chip">Materials &amp; Composition</li><li class="chip">Source Website</li><li class="chip">Source URL</li>

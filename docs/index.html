@@ -122,6 +122,15 @@
     .result-list .product { margin-top: 0; }
     .code { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
     @media (max-width: 410px) { .primary { flex-basis: 100%; } }
+    .preview-item { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+    .preview-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; }
+    .preview-field { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: .75rem; background: #fbfbfc; overflow-wrap: anywhere; }
+    .preview-field dt { font-weight: 650; }
+    .preview-field dd { margin: .3rem 0 0; }
+    .preview-field ul { margin: 0; padding-left: 1.2rem; }
+    .preview-field pre { margin: 0; white-space: pre-wrap; font-size: .85rem; }
+    .preview-wide { grid-column: 1 / -1; }
+    @media (max-width: 600px) { .preview-fields { grid-template-columns: minmax(0, 1fr); } }
   </style>
 </head>
 <body>
@@ -133,7 +142,7 @@
       <ol class="guide">
         <li>Enter or paste VN codes</li>
         <li>Select Search products</li>
-        <li>Review each result and open its source</li>
+        <li>Review the output preview</li>
       </ol>
     </header>
 
@@ -159,10 +168,9 @@
     </section>
 
     <section class="card output" aria-labelledby="output-title">
-      <h2 id="output-title">Planned output fields</h2>
-      <ul class="chips">
-        <li class="chip">Title</li><li class="chip">Short Description</li><li class="chip">Long Description</li><li class="chip">Body HTML</li><li class="chip">PDP Details</li><li class="chip">Materials &amp; Composition</li><li class="chip">Source Website</li><li class="chip">Source URL</li>
-      </ul>
+      <h2 id="output-title">Output preview</h2>
+      <p id="preview-status" class="muted" role="status">Search for a VN code to preview its product content.</p>
+      <div id="preview-items"></div>
     </section>
     <footer class="muted">Live storefront lookup, product content extraction, and Excel export are in development.</footer>
   </main>
@@ -172,13 +180,19 @@
         title: "Skate Loafer Shoe",
         color: "Dark Forest Green",
         summary: "Leather upper, PopCush cushioning, and a SickStick rubber outsole.",
+        description: "Inspired by a traditional loafer, this leather slip-on pairs a retro shape with skate-focused cushioning, grip and flexible construction.",
+        features: ["Slip-on loafer silhouette", "Reinforced skate construction", "PopCush insoles", "SickStick rubber waffle outsole", "Vulcanized sole"],
+        materials: "Leather upper and rubber outsole. Full composition unavailable.",
         path: "skate/shoes-5225/skate-loafer-VN0A5DXU1CI",
         image: "https://assets.vans.com/images/t_Thumbnail/v1756519877/VN0A5DXU1CI-HERO/Skate-Loafer-Shoe-VANS-HERO.png"
       }],
       ["VN000D26Y28", {
         title: "Hylane Shoe",
         color: "Black / White",
-        summary: "Open the Vans product page to review its description and features.",
+        summary: "A chunky low-top inspired by early-2000s skate shoes.",
+        description: "The Hylane revisits Vans’ 1999 Upland with a padded profile, a raised Sidestripe and a supportive cupsole.",
+        features: ["Oversized tongue and padded collar", "Wide laces", "Raised Sidestripe", "Reverse waffle outsole with flex grooves", "Cupsole construction"],
+        materials: "Leather upper. Full composition unavailable.",
         path: "shoes/hylane-1001/hylane-shoe-VN000D26Y28",
         image: "https://assets.vans.com/images/t_img/c_fill%2Cg_center%2Cf_auto%2Ch_573%2Ce_unsharp_mask%3A100%2Cw_458/dpr_2.0/v1734688821/VN000D26Y28-HERO/Hylane-Shoe-VANS-BlackWhite-HERO.png"
       }]
@@ -202,6 +216,45 @@
       link.target = "_blank";
       link.rel = "noopener";
       return link;
+    }
+
+    const previewStatus = document.querySelector("#preview-status");
+    const previewItems = document.querySelector("#preview-items");
+    const emptyPreview = "Search for a VN code to preview its product content.";
+
+    function escapeHtml(value) {
+      return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    function renderPreview(code) {
+      const product = products.get(code);
+      const sourceUrl = "https://www.vans.com/en-us/p/" + product.path;
+      const features = element("ul", "");
+      features.append(...product.features.map(feature => element("li", feature)));
+      const listHtml = product.features.map(feature => "<li>" + escapeHtml(feature) + "</li>").join("");
+      const bodyHtml = "<p>" + escapeHtml(product.description) + "</p>\n<ul>" + listHtml + "</ul>";
+      const fields = [
+        ["Title", element("span", product.title)],
+        ["Source Website", element("span", "Vans US")],
+        ["Short Description", element("span", product.summary)],
+        ["Long Description", element("span", product.description)],
+        ["PDP Details", features],
+        ["Materials & Composition", element("span", product.materials)],
+        ["Body HTML", element("pre", bodyHtml), "preview-wide"],
+        ["Source URL", externalLink(sourceUrl, sourceUrl), "preview-wide"]
+      ];
+
+      const article = element("article", "", "preview-item");
+      const list = element("dl", "", "preview-fields");
+      for (const [label, value, layout = ""] of fields) {
+        const field = element("div", "", "preview-field " + layout);
+        const definition = element("dd", "");
+        definition.append(value);
+        field.append(element("dt", label), definition);
+        list.append(field);
+      }
+      article.append(element("h3", code + " · " + product.title), list);
+      return article;
     }
 
     function renderResult(code) {
@@ -236,6 +289,8 @@
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       results.replaceChildren();
+      previewItems.replaceChildren();
+      previewStatus.textContent = emptyPreview;
       const entries = input.value.toUpperCase().split(/[\s,;]+/).filter(Boolean);
       const codes = [...new Set(entries)];
       if (!codes.length || codes.some(code => !/^VN[A-Z0-9]{9}$/.test(code))) {
@@ -245,7 +300,10 @@
         return;
       }
       input.removeAttribute("aria-invalid");
-      const matches = codes.filter(code => products.has(code)).length;
+      const matchedCodes = codes.filter(code => products.has(code));
+      const matches = matchedCodes.length;
+      previewStatus.textContent = matches ? "Content summarized from Vans US for review." : "No matched products to preview.";
+      previewItems.append(...matchedCodes.map(renderPreview));
       status.textContent = matches + " of " + codes.length + " matched in the preview catalog.";
       results.append(...codes.map(renderResult));
       if (matchMedia("(max-width: 760px)").matches) {
@@ -260,6 +318,8 @@
     document.querySelector("#clear").addEventListener("click", () => {
       form.reset();
       results.replaceChildren();
+      previewItems.replaceChildren();
+      previewStatus.textContent = emptyPreview;
       input.removeAttribute("aria-invalid");
       status.textContent = "Enter a code to see its result here.";
       input.focus();
